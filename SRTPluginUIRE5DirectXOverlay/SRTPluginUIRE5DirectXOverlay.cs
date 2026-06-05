@@ -156,7 +156,7 @@ namespace SRTPluginUIRE5DirectXOverlay
             if (config.ShowIGT)
                 DrawIGT(ref x, ref y, g);
 
-            if (config.ShowCharacterHP)
+            if (config.ShowCharactersHP)
                 DrawCharacterHP(ref x, ref y, g);
 
             x = config.PositionX + 5f;
@@ -165,8 +165,13 @@ namespace SRTPluginUIRE5DirectXOverlay
                 DrawKills(ref x, ref y, g);
 
             if (config.ShowDeaths)
+            {
                 g?.DrawText(_consolasBold, FONT, _brushes["white"], x + 10, y += LINE,
                     $"Deaths: {gameMemory.Deaths}");
+
+                g?.DrawText(_consolasBold, FONT, _brushes["white"], x + 10, y += LINE,
+                    $"Deaths2: {gameMemory.Deaths2}");
+            }
 
             if (config.ShowMoney)
                 g?.DrawText(_consolasBold, FONT, _brushes["goldenrod"], x + 10, y += LINE,
@@ -177,7 +182,7 @@ namespace SRTPluginUIRE5DirectXOverlay
                     $"Chapter {GetChapterName(gameMemory.Chapter)}");
 
             if (config.ShowDAs)
-                DrawDeathAccuracy(ref x, ref y, g);
+                DrawDifficultyAdjustment(ref x, ref y, g);
 
             if (gameMemoryConcrete.IsSRank)
                 g?.DrawText(_consolasBold, FONT, _brushes["lawngreen"], x + 10, y += LINE,
@@ -212,11 +217,8 @@ namespace SRTPluginUIRE5DirectXOverlay
         {
             DrawPlayerHP("Chris", gameMemory.Player, ref x, ref y, g);
 
-            if (config.ShowBothPlayers)
-            {
-                DrawPlayerHP("Sheva", gameMemory.Player2, ref x, ref y, g);
-                x = config.PositionX + 5f;
-            }
+            DrawPlayerHP("Sheva", gameMemory.Player2, ref x, ref y, g);
+
         }
 
         private void DrawPlayerHP(string playerName, GamePlayer player, ref float x, ref float y, Graphics g)
@@ -230,21 +232,13 @@ namespace SRTPluginUIRE5DirectXOverlay
 
         private void DrawKills(ref float x, ref float y, Graphics g)
         {
-            if (config.ShowBothPlayers)
-            {
-                g?.DrawText(_consolasBold, FONT, _brushes["white"], x + 10, y += LINE,
-                    $"Chris Kills: {gameMemory.ChrisKills}");
-                g?.DrawText(_consolasBold, FONT, _brushes["white"], x + 10, y += LINE,
-                    $"Sheva Kills: {gameMemory.ShevaKills}");
-            }
-            else
-            {
-                g?.DrawText(_consolasBold, FONT, _brushes["white"], x + 10, y += LINE,
-                    $"Kills: {gameMemory.ChrisKills}");
-            }
+            g?.DrawText(_consolasBold, FONT, _brushes["white"], x + 10, y += LINE,
+                $"Chris Kills: {gameMemory.ChrisKills}");
+            g?.DrawText(_consolasBold, FONT, _brushes["white"], x + 10, y += LINE,
+                $"Sheva Kills: {gameMemory.ShevaKills}");
         }
 
-        private void DrawDeathAccuracy(ref float x, ref float y, Graphics g)
+        private void DrawDifficultyAdjustment(ref float x, ref float y, Graphics g)
         {
             g?.DrawText(_consolasBold, FONT, _brushes["white"], x + 10, y += LINE,
                 $"Chris DA: {gameMemory.ChrisDA} (Rank: {gameMemory.ChrisDARank})");

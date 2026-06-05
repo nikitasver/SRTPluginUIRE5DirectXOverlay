@@ -5,15 +5,11 @@ namespace SRTPluginUIRE5DirectXOverlay
     {
         /// <summary>Show debug info (raw IGT in seconds). Default: true.</summary>
         public bool Debug { get; set; }
-        /// <summary>Reserved — currently behaves the same as text-only HP display. Default: false.</summary>
-        public bool ShowHPBars { get; set; }
-        /// <summary>Show stats for both Chris &amp; Sheva; false = Chris only. Default: true.</summary>
-        public bool ShowBothPlayers { get; set; }
 
         /// <summary>Show in-game timer. Default: true.</summary>
         public bool ShowIGT { get; set; }
         /// <summary>Show player HP. Default: true.</summary>
-        public bool ShowCharacterHP { get; set; }
+        public bool ShowCharactersHP { get; set; }
         /// <summary>Show kill counters. Default: true.</summary>
         public bool ShowKills { get; set; }
         /// <summary>Show death counter. Default: false.</summary>
@@ -22,7 +18,7 @@ namespace SRTPluginUIRE5DirectXOverlay
         public bool ShowMoney { get; set; }
         /// <summary>Show current chapter name. Default: true.</summary>
         public bool ShowChapter { get; set; }
-        /// <summary>Show Death Accuracy &amp; rank for both players. Default: true.</summary>
+        /// <summary>Show DA &amp; rank for both players. Default: true.</summary>
         public bool ShowDAs { get; set; }
         /// <summary>Show kills needed for S-rank. Default: true.</summary>
         public bool ShowKillsNeeded { get; set; }
@@ -43,11 +39,9 @@ namespace SRTPluginUIRE5DirectXOverlay
         public PluginConfiguration()
         {
             Debug = true;
-            ShowHPBars = false;
-            ShowBothPlayers = true;
 
             ShowIGT = true;
-            ShowCharacterHP = true;
+            ShowCharactersHP = true;
             ShowKills = true;
             ShowDeaths = false;
             ShowMoney = true;
