@@ -23,23 +23,39 @@ namespace SRTPluginUIRE5DirectXOverlay
 
         private OverlayWindow _window;
         private Graphics _graphics;
-
         private Font _consolasBold;
 
-        private SolidBrush _black, _white, _grey, _darkred, _red, _lightred, _lightyellow,
-                           _lightgreen, _lawngreen, _goldenrod, _greydark, _greydarker,
-                           _darkgreen, _darkyellow, _lightpurple, _darkpurple, _orange;
+        private Dictionary<string, SolidBrush> _brushes;
 
         public PluginConfiguration config;
         private float FONT => config.FontSize;
         private float LINE => config.FontSize * 1.5f;
-        private Process GetProcess() => Process.GetProcessesByName("re5dx9")?.FirstOrDefault();
-        private Process gameProcess;
-        private IntPtr gameWindowHandle;
 
-        SolidBrush HPBarColor;
-        SolidBrush TextColor;
-        private string PlayerName = "";
+        private Process _gameProcess;
+        private IntPtr _gameWindowHandle;
+
+        private static Process GetProcess() => Process.GetProcessesByName("re5dx9")?.FirstOrDefault();
+
+        private static readonly Dictionary<string, (byte r, byte g, byte b, byte a)> _brushDefs = new()
+        {
+            ["black"] = (0, 0, 0, 255),
+            ["white"] = (255, 255, 255, 255),
+            ["grey"] = (128, 128, 128, 255),
+            ["greydark"] = (64, 64, 64, 255),
+            ["greydarker"] = (24, 24, 24, 100),
+            ["darkred"] = (153, 0, 0, 100),
+            ["darkgreen"] = (0, 102, 0, 100),
+            ["darkyellow"] = (218, 165, 32, 100),
+            ["red"] = (255, 0, 0, 255),
+            ["lightred"] = (255, 172, 172, 255),
+            ["lightyellow"] = (255, 255, 150, 255),
+            ["lightgreen"] = (150, 255, 150, 255),
+            ["lawngreen"] = (124, 252, 0, 255),
+            ["goldenrod"] = (218, 165, 32, 255),
+            ["lightpurple"] = (222, 182, 255, 255),
+            ["darkpurple"] = (73, 58, 85, 100),
+            ["orange"] = (255, 165, 0, 255),
+        };
 
         [STAThread]
         public override int Startup(IPluginHostDelegates hostDelegates)
@@ -47,13 +63,13 @@ namespace SRTPluginUIRE5DirectXOverlay
             this.hostDelegates = hostDelegates;
             config = LoadConfiguration<PluginConfiguration>();
 
-            gameProcess = GetProcess();
-            if (gameProcess == default)
+            _gameProcess = GetProcess();
+            if (_gameProcess == default)
                 return 1;
 
-            IList<IntPtr> windows = PInvoke.GetWindowHandles(gameProcess);
+            IList<IntPtr> windows = PInvoke.GetWindowHandles(_gameProcess);
             if (windows.Count > 0)
-                gameWindowHandle = windows[0];
+                _gameWindowHandle = windows[0];
             else
                 return 1;
 
@@ -79,26 +95,9 @@ namespace SRTPluginUIRE5DirectXOverlay
 
             _consolasBold = _graphics?.CreateFont("Consolas", config.FontSize, true);
 
-            _black = _graphics?.CreateSolidBrush(0, 0, 0);
-            _white = _graphics?.CreateSolidBrush(255, 255, 255);
-            _grey = _graphics?.CreateSolidBrush(128, 128, 128);
-            _greydark = _graphics?.CreateSolidBrush(64, 64, 64);
-            _greydarker = _graphics?.CreateSolidBrush(24, 24, 24, 100);
-            _darkred = _graphics?.CreateSolidBrush(153, 0, 0, 100);
-            _darkgreen = _graphics?.CreateSolidBrush(0, 102, 0, 100);
-            _darkyellow = _graphics?.CreateSolidBrush(218, 165, 32, 100);
-            _red = _graphics?.CreateSolidBrush(255, 0, 0);
-            _lightred = _graphics?.CreateSolidBrush(255, 172, 172);
-            _lightyellow = _graphics?.CreateSolidBrush(255, 255, 150);
-            _lightgreen = _graphics?.CreateSolidBrush(150, 255, 150);
-            _lawngreen = _graphics?.CreateSolidBrush(124, 252, 0);
-            _goldenrod = _graphics?.CreateSolidBrush(218, 165, 32);
-            _lightpurple = _graphics?.CreateSolidBrush(222, 182, 255);
-            _darkpurple = _graphics?.CreateSolidBrush(73, 58, 85, 100);
-            _orange = _graphics?.CreateSolidBrush(255, 165, 0);
-
-            HPBarColor = _grey;
-            TextColor = _white;
+            _brushes = new Dictionary<string, SolidBrush>(_brushDefs.Count);
+            foreach (var kv in _brushDefs)
+                _brushes[kv.Key] = _graphics?.CreateSolidBrush(kv.Value.r, kv.Value.g, kv.Value.b, kv.Value.a);
 
             return 0;
         }
@@ -106,16 +105,13 @@ namespace SRTPluginUIRE5DirectXOverlay
         public override int Shutdown()
         {
             SaveConfiguration(config);
-            _black?.Dispose(); _white?.Dispose(); _grey?.Dispose();
-            _greydark?.Dispose(); _greydarker?.Dispose();
-            _darkred?.Dispose(); _darkgreen?.Dispose(); _darkyellow?.Dispose();
-            _red?.Dispose(); _lightred?.Dispose(); _lightyellow?.Dispose();
-            _lightgreen?.Dispose(); _lawngreen?.Dispose(); _goldenrod?.Dispose();
-            _lightpurple?.Dispose(); _darkpurple?.Dispose(); _orange?.Dispose();
+            foreach (var brush in _brushes.Values)
+                brush?.Dispose();
+            _brushes.Clear();
             _consolasBold?.Dispose();
-            _graphics?.Dispose(); _graphics = null;
-            _window?.Dispose(); _window = null;
-            gameProcess?.Dispose(); gameProcess = null;
+            _graphics?.Dispose();
+            _window?.Dispose();
+            _gameProcess?.Dispose();
             return 0;
         }
 
@@ -123,8 +119,8 @@ namespace SRTPluginUIRE5DirectXOverlay
         {
             this.gameMemory = (IGameMemoryRE5)gameMemory;
             this.gameMemoryConcrete = (GameMemoryRE5)gameMemory;
-            _window?.PlaceAbove(gameWindowHandle);
-            _window?.FitTo(gameWindowHandle, true);
+            _window?.PlaceAbove(_gameWindowHandle);
+            _window?.FitTo(_gameWindowHandle, true);
 
             try
             {
@@ -143,187 +139,154 @@ namespace SRTPluginUIRE5DirectXOverlay
             return 0;
         }
 
-        private void SetColors(GamePlayer player)
+        private (SolidBrush bar, SolidBrush text) GetStatusColors(PlayerStatus status) => status switch
         {
-            if (player.HealthState == PlayerStatus.Fine)
-            { HPBarColor = _darkgreen; TextColor = _lightgreen; return; }
-            else if (player.HealthState == PlayerStatus.Caution)
-            { HPBarColor = _darkyellow; TextColor = _lightyellow; return; }
-            else if (player.HealthState == PlayerStatus.Danger)
-            { HPBarColor = _darkred; TextColor = _lightred; return; }
-            else
-            { HPBarColor = _greydarker; TextColor = _white; return; }
-        }
+            PlayerStatus.Fine => (_brushes["darkgreen"], _brushes["lightgreen"]),
+            PlayerStatus.Caution => (_brushes["darkyellow"], _brushes["lightyellow"]),
+            PlayerStatus.Danger => (_brushes["darkred"], _brushes["lightred"]),
+            _ => (_brushes["greydarker"], _brushes["white"]),
+        };
 
         private void DrawOverlay()
         {
-            float baseXOffset = config.PositionX;
-            float baseYOffset = config.PositionY;
-            float x = baseXOffset + 5f;
-            float y = baseYOffset;
+            float x = config.PositionX + 5f;
+            float y = config.PositionY;
+            var g = _graphics;
 
-            _graphics?.DrawText(_consolasBold, FONT * 1.25f, _white, x + 10, y += LINE, "IGT: ");
-            _graphics?.DrawText(_consolasBold, FONT * 1.25f, _lawngreen, x + 10f + GetStringSize("IGT: ", FONT * 1.25f) + 10f, y, gameMemory.IGTFormattedString);
+            if (config.ShowIGT)
+                DrawIGT(ref x, ref y, g);
+
+            if (config.ShowCharacterHP)
+                DrawCharacterHP(ref x, ref y, g);
+
+            x = config.PositionX + 5f;
+
+            if (config.ShowKills)
+                DrawKills(ref x, ref y, g);
+
+            if (config.ShowDeaths)
+                g?.DrawText(_consolasBold, FONT, _brushes["white"], x + 10, y += LINE,
+                    $"Deaths: {gameMemory.Deaths}");
+
+            if (config.ShowMoney)
+                g?.DrawText(_consolasBold, FONT, _brushes["goldenrod"], x + 10, y += LINE,
+                    $"Money: {gameMemory.Money}");
+
+            if (config.ShowChapter)
+                g?.DrawText(_consolasBold, FONT, _brushes["grey"], x + 10, y += LINE,
+                    $"Chapter {GetChapterName(gameMemory.Chapter)}");
+
+            if (config.ShowDAs)
+                DrawDeathAccuracy(ref x, ref y, g);
+
+            if (gameMemoryConcrete.IsSRank)
+                g?.DrawText(_consolasBold, FONT, _brushes["lawngreen"], x + 10, y += LINE,
+                    "S-RANK ELIGIBLE (Chris)");
+
+            if (gameMemoryConcrete.IsSRank2)
+                g?.DrawText(_consolasBold, FONT, _brushes["lightgreen"], x + 10, y += LINE,
+                    "S-RANK ELIGIBLE (Sheva)");
+
+            if (config.ShowKillsNeeded)
+                g?.DrawText(_consolasBold, FONT, _brushes["grey"], x + 10, y += LINE,
+                    $"Kills needed for S: {gameMemoryConcrete.KillsRequired}");
+
+            if (config.ShowEnemyHP)
+                DrawEnemyHP(y, g);
+        }
+
+        private void DrawIGT(ref float x, ref float y, Graphics g)
+        {
+            float labelWidth = MeasureString("IGT: ", FONT * 1.25f);
+
+            g?.DrawText(_consolasBold, FONT * 1.25f, _brushes["white"], x + 10, y += LINE, "IGT: ");
+            g?.DrawText(_consolasBold, FONT * 1.25f, _brushes["lawngreen"], x + 10f + labelWidth + 10f, y,
+                gameMemory.IGTFormattedString);
 
             if (config.Debug)
-            {
-                _graphics?.DrawText(_consolasBold, FONT, _grey, x, y += LINE, string.Format("Raw IGT: {0:F3}s", gameMemory.IGT));
-            }
+                g?.DrawText(_consolasBold, FONT, _brushes["grey"], x, y += LINE,
+                    $"Raw IGT: {gameMemory.IGT:F3}s");
+        }
+
+        private void DrawCharacterHP(ref float x, ref float y, Graphics g)
+        {
+            DrawPlayerHP("Chris", gameMemory.Player, ref x, ref y, g);
 
             if (config.ShowBothPlayers)
             {
-                PlayerName = "Chris: ";
-                SetColors(gameMemory.Player);
-                if (config.ShowHPBars)
-                {
-                    DrawHealthBar(ref x, ref y, PlayerName,
-                        gameMemory.Player.CurrentHP, gameMemory.Player.MaxHP, gameMemory.Player.Percentage);
-                }
-                else
-                {
-                    y += LINE;
-                    _graphics?.DrawText(_consolasBold, FONT, TextColor, x + 10f, y,
-                        string.Format("{0}{1} / {2} ({3:P1})", PlayerName,
-                            gameMemory.Player.CurrentHP, gameMemory.Player.MaxHP, gameMemory.Player.Percentage));
-                }
+                DrawPlayerHP("Sheva", gameMemory.Player2, ref x, ref y, g);
+                x = config.PositionX + 5f;
+            }
+        }
 
-                PlayerName = "Sheva: ";
-                SetColors(gameMemory.Player2);
-                if (config.ShowHPBars)
-                {
-                    DrawHealthBar(ref x, ref y, PlayerName,
-                        gameMemory.Player2.CurrentHP, gameMemory.Player2.MaxHP, gameMemory.Player2.Percentage);
-                }
-                else
-                {
-                    y += LINE;
-                    _graphics?.DrawText(_consolasBold, FONT, TextColor, x + 10f, y,
-                        string.Format("{0}{1} / {2} ({3:P1})", PlayerName,
-                            gameMemory.Player2.CurrentHP, gameMemory.Player2.MaxHP, gameMemory.Player2.Percentage));
-                }
+        private void DrawPlayerHP(string playerName, GamePlayer player, ref float x, ref float y, Graphics g)
+        {
+            var (_, textBrush) = GetStatusColors(player.HealthState);
 
-                x = baseXOffset + 5f;
+            y += LINE;
+            g?.DrawText(_consolasBold, FONT, textBrush, x + 10f, y,
+                $"{playerName}: {player.CurrentHP} / {player.MaxHP} ({player.Percentage:P1})");
+        }
 
-                _graphics?.DrawText(_consolasBold, FONT, _white, x + 10, y += LINE,
-                    string.Format("Chris Kills: {0}", gameMemory.ChrisKills));
-                _graphics?.DrawText(_consolasBold, FONT, _white, x + 10, y += LINE,
-                    string.Format("Sheva Kills: {0}", gameMemory.ShevaKills));
-
-                if (config.ShowShots)
-                {
-                    _graphics?.DrawText(_consolasBold, FONT, _white, x + 10, y += LINE,
-                        string.Format("Shots: {0} | Hit: {1} | Acc: {2:P1}",
-                            gameMemory.ShotsFired, gameMemory.EnemiesHit,
-                            gameMemory.ShotsFired > 0 ? (float)gameMemory.EnemiesHit / gameMemory.ShotsFired : 0f));
-
-                    _graphics?.DrawText(_consolasBold, FONT, _grey, x + 10, y += LINE,
-                        string.Format("Shots2: {0} | Hit2: {1} | Acc2: {2:P1}",
-                            gameMemory.ShotsFired2, gameMemory.EnemiesHit2,
-                            gameMemory.ShotsFired2 > 0 ? (float)gameMemory.EnemiesHit2 / gameMemory.ShotsFired2 : 0f));
-                }
+        private void DrawKills(ref float x, ref float y, Graphics g)
+        {
+            if (config.ShowBothPlayers)
+            {
+                g?.DrawText(_consolasBold, FONT, _brushes["white"], x + 10, y += LINE,
+                    $"Chris Kills: {gameMemory.ChrisKills}");
+                g?.DrawText(_consolasBold, FONT, _brushes["white"], x + 10, y += LINE,
+                    $"Sheva Kills: {gameMemory.ShevaKills}");
             }
             else
             {
-                PlayerName = "Chris: ";
-                SetColors(gameMemory.Player);
-                if (config.ShowHPBars)
-                {
-                    DrawHealthBar(ref x, ref y, PlayerName,
-                        gameMemory.Player.CurrentHP, gameMemory.Player.MaxHP, gameMemory.Player.Percentage);
-                }
-                else
-                {
-                    y += LINE;
-                    _graphics?.DrawText(_consolasBold, FONT, TextColor, x + 10f, y,
-                        string.Format("{0}{1} / {2} ({3:P1})", PlayerName,
-                            gameMemory.Player.CurrentHP, gameMemory.Player.MaxHP, gameMemory.Player.Percentage));
-                }
-
-                _graphics?.DrawText(_consolasBold, FONT, _white, x + 10, y += LINE,
-                    string.Format("Kills: {0}", gameMemory.ChrisKills));
-                if (config.ShowShots)
-                {
-                    _graphics?.DrawText(_consolasBold, FONT, _white, x + 10, y += LINE,
-                        string.Format("Shots: {0} | Hit: {1} | Acc: {2:P1}",
-                            gameMemory.ShotsFired, gameMemory.EnemiesHit,
-                            gameMemory.ShotsFired > 0 ? (float)gameMemory.EnemiesHit / gameMemory.ShotsFired : 0f));
-                }
+                g?.DrawText(_consolasBold, FONT, _brushes["white"], x + 10, y += LINE,
+                    $"Kills: {gameMemory.ChrisKills}");
             }
+        }
 
-            x = baseXOffset + 5f;
+        private void DrawDeathAccuracy(ref float x, ref float y, Graphics g)
+        {
+            g?.DrawText(_consolasBold, FONT, _brushes["white"], x + 10, y += LINE,
+                $"Chris DA: {gameMemory.ChrisDA} (Rank: {gameMemory.ChrisDARank})");
+            g?.DrawText(_consolasBold, FONT, _brushes["white"], x + 10, y += LINE,
+                $"Sheva DA: {gameMemory.ShevaDA} (Rank: {gameMemory.ShevaDARank})");
+        }
 
-            if (config.ShowDeaths)
-                _graphics?.DrawText(_consolasBold, FONT, _white, x + 10, y += LINE,
-                    string.Format("Deaths: {0}", gameMemory.Deaths));
-            else
-                y += LINE;
-
-            _graphics?.DrawText(_consolasBold, FONT, _goldenrod, x + 10, y += LINE,
-                string.Format("Money: {0}", gameMemory.Money));
-
-            _graphics?.DrawText(_consolasBold, FONT, _grey, x + 10, y += LINE,
-                string.Format("Chapter {0}", GetChapterName(gameMemory.Chapter)));
-
-            _graphics?.DrawText(_consolasBold, FONT, _white, x + 10, y += LINE,
-                string.Format("Chris DA: {0} (Rank: {1})", gameMemory.ChrisDA, gameMemory.ChrisDARank));
-
-            _graphics?.DrawText(_consolasBold, FONT, _white, x + 10, y += LINE,
-                string.Format("Sheva DA: {0} (Rank: {1})", gameMemory.ShevaDA, gameMemory.ShevaDARank));
-
-            if (gameMemoryConcrete.IsSRank)
-                _graphics?.DrawText(_consolasBold, FONT, _lawngreen, x + 10, y += LINE, "S-RANK ELIGIBLE (Chris)");
-
-            if (gameMemoryConcrete.IsSRank2)
-                _graphics?.DrawText(_consolasBold, FONT, _lightgreen, x + 10, y += LINE, "S-RANK ELIGIBLE (Sheva)");
-
-            _graphics?.DrawText(_consolasBold, FONT, _grey, x + 10, y += LINE,
-                string.Format("Kills needed for S: {0}", gameMemoryConcrete.KillsRequired));
-
-float enemyX = config.EnemyHPPositionX == -1 ? baseXOffset + 5f : config.EnemyHPPositionX;
-            float enemyY = config.EnemyHPPositionY == -1 ? y + LINE : config.EnemyHPPositionY;
+        private void DrawEnemyHP(float currentY, Graphics g)
+        {
+            float enemyX = config.EnemyHPPositionX == -1 ? config.PositionX + 5f : config.EnemyHPPositionX;
+            float enemyY = config.EnemyHPPositionY == -1 ? currentY + LINE : config.EnemyHPPositionY;
 
             foreach (EnemyHP enemy in gameMemoryConcrete.EnemyHealth.Where(a => a.IsAlive))
             {
-                _graphics?.DrawText(_consolasBold, FONT * 0.75f, _lightred, enemyX + 5f, enemyY,
-                    string.Format("{0}/{1}", enemy.CurrentHP, enemy.MaximumHP));
+                g?.DrawText(_consolasBold, FONT * 0.75f, _brushes["lightred"], enemyX + 5f, enemyY,
+                    $"{enemy.CurrentHP}/{enemy.MaximumHP}");
                 enemyY += FONT;
             }
         }
 
-private void DrawHealthBar(ref float xOffset, ref float yOffset, string name, float currentHP, float maxHP, float percentage)
+        private float MeasureString(string text, float size) =>
+            (float)_graphics?.MeasureString(_consolasBold, size, text).X;
+
+        private static string GetChapterName(int chapter) => chapter switch
         {
-            yOffset += LINE;
-            float textOffsetX = xOffset + 10f;
-
-            _graphics?.DrawText(_consolasBold, FONT, TextColor, textOffsetX, yOffset,
-                string.Format("{0}{1} / {2} ({3:P1})", name, currentHP, maxHP, percentage));
-        }
-
-        private string GetChapterName(int chapter)
-        {
-            switch (chapter)
-            {
-                case 0: return "1-1: Assembly Place";
-                case 1: return "1-2: A Slum";
-                case 2: return "2-1: The Underground";
-                case 3: return "2-2: The Mines";
-                case 4: return "2-3: Execution Path";
-                case 5: return "3-1: The Marshlands";
-                case 6: return "3-2: The Ruins";
-                case 7: return "3-3: The Ship Deck";
-                case 8: return "4-1: The Boat";
-                case 9: return "4-2: The Cargo";
-                case 10: return "5-1: The Island";
-                case 11: return "5-2: Laboratory";
-                case 12: return "5-3: The Reactor";
-                case 13: return "6-1: The City";
-                case 14: return "6-2: The Maze";
-                case 15: return "6-3: The Roof";
-                default: return string.Format("{0}", chapter);
-            }
-        }
-
-        private float GetStringSize(string str, float size)
-            => (float)_graphics?.MeasureString(_consolasBold, size, str).X;
+            0 => "1-1: Assembly Place",
+            1 => "1-2: A Slum",
+            2 => "2-1: The Underground",
+            3 => "2-2: The Mines",
+            4 => "2-3: Execution Path",
+            5 => "3-1: The Marshlands",
+            6 => "3-2: The Ruins",
+            7 => "3-3: The Ship Deck",
+            8 => "4-1: The Boat",
+            9 => "4-2: The Cargo",
+            10 => "5-1: The Island",
+            11 => "5-2: Laboratory",
+            12 => "5-3: The Reactor",
+            13 => "6-1: The City",
+            14 => "6-2: The Maze",
+            15 => "6-3: The Roof",
+            _ => $"{chapter}",
+        };
     }
 }
