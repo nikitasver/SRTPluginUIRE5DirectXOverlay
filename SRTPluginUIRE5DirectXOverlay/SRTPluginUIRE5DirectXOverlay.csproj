@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Platforms>x86</Platforms>
+    <RuntimeIdentifiers>win-x86</RuntimeIdentifiers>
+    <Authors>Neoyato</Authors>
+    <Company>Neoyato</Company>
+    <Copyright></Copyright>
+    <Product>Resident Evil 5 (2008) DirectX Overlay User Interface Plugin</Product>
+    <Description>A user-interface plugin to display the values provided by the RE5 Provider Plugin in a DirectX overlay.</Description>
+    <Version>1.0.0.0</Version>
+    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>3.0.0.0</AssemblyVersion>
+    <DebugType>embedded</DebugType>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GameOverlay.Net" Version="4.3.1" />
+    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="SRTPluginBase">
+      <HintPath>..\..\SRTHost\SRTPluginBase\bin\Debug\netstandard2.1\SRTPluginBase.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="SRTPluginProviderRE5">
+      <HintPath>..\..\provider_dll\SRTPluginProviderRE5\SRTPluginProviderRE5.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="ProcessMemory32">
+      <HintPath>..\..\provider_dll\SRTPluginProviderRE5\ProcessMemory32.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30011.22
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SRTPluginUIRE5DirectXOverlay", "SRTPluginUIRE5DirectXOverlay\SRTPluginUIRE5DirectXOverlay.csproj", "{EE688214-F225-4A46-9ABF-463F9A1DD459}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EE688214-F225-4A46-9ABF-463F9A1DD459}.Debug|x86.ActiveCfg = Debug|x86
+		{EE688214-F225-4A46-9ABF-463F9A1DD459}.Debug|x86.Build.0 = Debug|x86
+		{EE688214-F225-4A46-9ABF-463F9A1DD459}.Release|x86.ActiveCfg = Release|x86
+		{EE688214-F225-4A46-9ABF-463F9A1DD459}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A5B0BFB8-975D-47B8-B783-404EF6607F9B}
+	EndGlobalSection
+EndGlobal
